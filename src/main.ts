@@ -20,13 +20,17 @@ function fitCanvasToGrid(canvas: HTMLCanvasElement, cfg: SimConfig) {
     canvas.height = Math.round(cssH * dpr)
 }
 
-const result = await runSimulation(cfg, {
-    beforeSimStart: ({state, cfg}) => {
-        fitCanvasToGrid(canvas, cfg)
-    },
-    afterSimStart: ({state, cfg}) => {
-        state.addRandomBlobs(cfg.blobCount)
-    }
-})
+(async () => {
+    const result = await runSimulation(cfg, {
+        beforeSimStart: ({ state, cfg: cfg }) => {
+            fitCanvasToGrid(canvas, cfg);
+        },
+        afterSimStart: ({state, cfg}) => {
+            state.addRandomBlobs(cfg.blobCount)
+        }
+    });
 
-render(canvas, result)
+    render(canvas, result)
+})();
+
+
