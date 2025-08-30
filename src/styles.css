@@ -1,120 +1,55 @@
+/*
+  Blob Grid styles
+  - Verbose, commented, and tokenised for easy theming
+  - Neutral dark theme
+*/
+
+/* ===== CSS Variables ===== */
 :root {
-    --bg: #0b0f14;
-    --panel: #11161d;
-    --text: #e6ebf2;
-    --muted: #99a3b3;
-    --accent: #2dd4bf;
-    --border: #1f2733;
-    --tooltip-bg: #0f141b;
-    --tooltip-border: #1f2733;
-    --shadow: rgba(0,0,0,0.35);
-    --order: #ef4444;
-    --idle: #94a3b8;
-    --serving: #60a5fa;
-    --todepot: #f59e0b;
-    --depot: #2dd4bf;
+  /* Core palette */
+  --bg:       #0b0f14;   /* page background */
+  --panel:    #0a0f14;   /* stage background */
+  --border:   #1d2733;   /* grid/outline */
+  --ink:      #e6ebf2;   /* text color */
+  --accent:   #2dd4bf;   /* blob fill */
+
+  /* Sizing */
+  --radius-lg: 12px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+
+  /* Typography */
+  --font: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+  --fs-100: 12px;
+  --fs-200: 14px;
+  --fs-300: 16px;
 }
-* { box-sizing: border-box; }
-html, body, #app {
-    height: 100%;
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+
+/* ===== Base ===== */
+* { box-sizing: border-box }
+html, body { height: 100%; margin: 0 }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: var(--fs-300);
 }
-#app { display: grid; grid-template-columns: 320px 1fr; gap: 16px; padding: 16px; }
-.panel {
-    background: var(--panel);
-    border-radius: 16px;
-    padding: 16px;
-    box-shadow: 0 10px 30px var(--shadow);
-}
-.panel h1 { margin: 0 0 12px 0; font-size: 20px; }
-.control { margin: 10px 0; }
-.control label {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 4px;
-}
-.control input[type="range"] { width: 100%; }
-.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
-.actions button {
-    padding: 8px 10px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: #0f141b;
-    color: var(--text);
-    cursor: pointer;
-}
-.actions button:disabled { opacity: 0.5; cursor: not-allowed; }
-.kpis h2, .legend h2 { font-size: 14px; margin: 12px 0 6px; color: var(--muted); }
-.kpis ul, .legend ul { list-style: none; padding: 0; margin: 0; }
-.kpis li, .legend li { font-size: 13px; margin: 4px 0; display: flex; align-items: center; gap: 8px; }
+
+/* ===== Layout ===== */
 .stage {
-    background: #0a0f14;
-    border-radius: 16px;
-    display: grid;
-    place-items: center;
-    box-shadow: inset 0 0 0 1px #15202b, 0 10px 40px rgba(0,0,0,0.4);
-    padding: 8px;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  background: var(--panel);
+  padding: var(--space-4);
 }
+
+/* Canvas gets a subtle frame so edges are visible on dark bg */
 canvas {
-    background: #0b0f14;
-    border-radius: 12px;
-    box-shadow: 0 0 0 1px #1d2835;
+  background: var(--bg);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 0 1px var(--border);
+  display: block; /* removes inline-gap */
 }
-
-/* Info tooltip */
-.info {
-    position: relative;
-    display: inline-grid;
-    place-items: center;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    cursor: help;
-    user-select: none;
-}
-.info::before { content: "i"; font-size: 11px; line-height: 1; }
-.info::after {
-    content: attr(data-tip);
-    position: absolute;
-    left: 20px;
-    top: -2px;
-    background: var(--tooltip-bg);
-    color: var(--text);
-    border: 1px solid var(--tooltip-border);
-    padding: 8px 10px;
-    border-radius: 8px;
-    white-space: pre-line;
-    max-width: 260px;
-    font-size: 12px;
-    line-height: 1.25;
-    box-shadow: 0 8px 24px var(--shadow);
-    opacity: 0;
-    transform: translateY(-2px);
-    pointer-events: none;
-    transition: opacity 120ms ease, transform 120ms ease;
-    z-index: 10;
-}
-.info:focus::after, .info:hover::after { opacity: 1; transform: translateY(0); }
-
-/* Legend swatches */
-.legend { margin-top: 12px; }
-.swatch {
-    width: 14px; height: 14px;
-    display: inline-block;
-    box-shadow: 0 0 0 1px var(--border);
-}
-.sq { border-radius: 2px; }
-.cr { border-radius: 50%; }
-.depot { background: var(--depot); }
-.order { background: var(--order); }
-.idle { background: var(--idle); }
-.serving { background: var(--serving); }
-.todepot { background: var(--todepot); }
