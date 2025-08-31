@@ -15,8 +15,11 @@ export interface Base {
 export interface Drone {
     id: number;
     position: Position;
-    spawned: boolean; // only render if true
+    spawned: boolean;
+    path?: Position[];   // full planned path
+    step?: number;       // index into path for rendering
 }
+
 
 export interface Casualty {
     id: number;
