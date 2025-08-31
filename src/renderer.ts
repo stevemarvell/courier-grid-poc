@@ -1,5 +1,5 @@
 // /src/renderer.ts
-import type { SimResult } from './types'
+import type {SimResult} from './types'
 
 const COLORS = {
   grid: '#1d2733',
@@ -100,9 +100,9 @@ export function render(canvas: HTMLCanvasElement, res: SimResult) {
 
   // AP (Actual Position): red circle, nearly edge-to-edge, id centered
   for (const cas of res.casualties) {
-    const { L, T, R, B, cx, cy, w, h } = cellRect(cas.position.x, cas.position.y, 0);
-    const shrink = pad; // small shrink to avoid overpainting grid
-    const { r } = drawCircleRect(ctx, L, T, R, B, COLORS.ap, shrink);
+    const { L, T, R, B, cx, cy } = cellRect(cas.position.x, cas.position.y, 0);
+     // small shrink to avoid overpainting grid
+    const { r } = drawCircleRect(ctx, L, T, R, B, COLORS.ap, pad);
     const px = Math.round(r * 0.88);
     drawCenteredText(ctx, String(cas.id), cx, cy, px, COLORS.textLight);
   }
