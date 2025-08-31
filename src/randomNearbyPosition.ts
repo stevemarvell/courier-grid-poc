@@ -1,3 +1,4 @@
+// /src/randomNearbyPosition.ts
 import { randomNormal, randomLcg } from 'd3-random'
 import type { Position } from './types'
 

@@ -1,3 +1,4 @@
+// /src/renderer.ts
 import type { SimResult } from './types'
 
 const COLORS = {

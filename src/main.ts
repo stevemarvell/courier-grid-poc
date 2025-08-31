@@ -1,3 +1,4 @@
+// /src/main.ts
 import { runSimulation } from './sim'
 import { render } from './renderer'
 import type { SimConfig } from './types'

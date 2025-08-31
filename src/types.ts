@@ -1,4 +1,4 @@
-// Core spatial type used everywhere
+// /src/type.ts
 export interface Position {
     x: number;
     y: number;

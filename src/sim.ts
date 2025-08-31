@@ -1,3 +1,4 @@
+// /src/sim.ts
 import type {
   SimConfig,
   SimHooks,
