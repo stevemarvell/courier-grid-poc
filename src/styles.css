@@ -1,35 +1,22 @@
-/* styles.css */
-
-/*
-  Blob Grid styles
-  - Verbose, commented, and tokenised for easy theming
-  - Neutral dark theme
-*/
-
-/* ===== CSS Variables ===== */
 :root {
-  /* Core palette */
-  --bg:       #0b0f14;   /* page background */
-  --panel:    #0a0f14;   /* stage background */
-  --border:   #1d2733;   /* grid/outline */
-  --ink:      #e6ebf2;   /* text color */
-  --accent:   #2dd4bf;   /* blob fill */
-
-  /* Sizing */
+  --bg: #0b0f14;
+  --panel: #0a0f14;
+  --border: #1d2733;
+  --ink: #e6ebf2;
+  --accent: #b8c1c9;
+  --base: #5b6977;
+  --casualty: #f43f5e;
+  --est: #f59e42;
   --radius-lg: 12px;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
-
-  /* Typography */
   --font: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
   --fs-100: 12px;
   --fs-200: 14px;
   --fs-300: 16px;
 }
-
-/* ===== Base ===== */
 * { box-sizing: border-box }
 html, body { height: 100%; margin: 0 }
 body {
@@ -38,20 +25,56 @@ body {
   font-family: var(--font);
   font-size: var(--fs-300);
 }
-
-/* ===== Layout ===== */
 .stage {
   height: 100vh;
   display: grid;
-  place-items: center;
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 200px 1fr;
+  grid-template-areas:
+    "top-bar top-bar"
+    "sidebar main"
+    "bottom-bar bottom-bar";
   background: var(--panel);
   padding: var(--space-4);
 }
-
-/* Canvas gets a subtle frame so edges are visible on dark bg */
-canvas {
+#top-bar {
+  grid-area: top-bar;
+  padding: var(--space-2) var(--space-3);
+  font-weight: bold;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 1px;
+}
+#sidebar {
+  grid-area: sidebar;
+  padding: var(--space-3);
+  border-right: 1px solid var(--border);
+}
+#sidebar-key .key {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 2px;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+.key.base { background: var(--base); }
+.key.drone { background: var(--accent); }
+.key.est { background: none; border: 2px solid var(--est);}
+.key.cas { background: var(--casualty);}
+.main-canvas, #main-canvas {
+  grid-area: main;
+  justify-self: center;
+  align-self: center;
   background: var(--bg);
   border-radius: var(--radius-lg);
   box-shadow: 0 0 0 1px var(--border);
-  display: block; /* removes inline-gap */
+  display: block;
+}
+#bottom-bar {
+  grid-area: bottom-bar;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--fs-200);
+  border-top: 1px solid var(--border);
+  color: #94a3b8;
+  text-align: right;
 }
