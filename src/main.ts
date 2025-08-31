@@ -98,7 +98,7 @@ function renderConfigPanel(cfg: SimConfig) {
     cfg.stdDev = Number(data.get('stdDev'));
     cfg.maxTranslation = Number(data.get('maxTranslation'));
     const seedValue = data.get('seed');
-    cfg.seed = seedValue === '' || seedValue == null ? undefined : Number(seedValue);
+    cfg.seed = seedValue === '' ? undefined : Number(seedValue);
     await rerunSimulation();
   };
 }
