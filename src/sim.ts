@@ -11,7 +11,6 @@ import type {
 } from './types'
 import { randomNormal, randomLcg } from 'd3-random'
 import { randomNearbyPosition } from './randomNearbyPosition'
-import { planPathSingleDrone } from './search'
 
 function makeRng(seed?: number) {
   const source = seed == null ? null : randomLcg(seed)
@@ -41,9 +40,6 @@ export async function runSimulation(cfg: SimConfig, hooks?: Partial<SimHooks>): 
     })
   }
 
-  // Drones start unspawned
-  const drones: Drone[] = []
-
   // Casualties: EP from rng, AP from nearby normal with clamp
   const casualties: Casualty[] = []
   for (let i = 0; i < cfg.casualtyCount; i++) {
@@ -64,12 +60,11 @@ export async function runSimulation(cfg: SimConfig, hooks?: Partial<SimHooks>): 
     casualties.push({ id: i + 1, estimatedPosition, position })
   }
 
-  // Single-drone search: spawn one at base 1 and plan to casualty 1
-  if (cfg.droneCount > 0 && bases.length > 0 && casualties.length > 0) {
+  // Spawn a single drone at base[0] with an initial trail of the starting cell only
+  const drones: Drone[] = []
+  if (cfg.droneCount > 0 && bases.length > 0) {
     const base0 = bases[0]
-    const cas0 = casualties[0]
-    const path = planPathSingleDrone(base0.position, cas0.estimatedPosition, cas0.position, cfg)
-    drones.push({ id: 1, position: path[0], spawned: true, path, step: 0 })
+    drones.push({ id: 1, position: base0.position, spawned: true, path: [base0.position], step: 0 })
     base0.unspawned = Math.max(0, (base0.unspawned ?? 0) - 1)
   }
 

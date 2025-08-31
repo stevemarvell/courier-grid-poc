@@ -15,16 +15,15 @@ export interface Base {
 export interface Drone {
     id: number;
     position: Position;
-    spawned: boolean;
-    path?: Position[];   // full planned path
-    step?: number;       // index into path for rendering
+    spawned: boolean;      // only render if true
+    path?: Position[];     // visited cells in order
+    step?: number;         // index into path for rendering
 }
-
 
 export interface Casualty {
     id: number;
-    estimatedPosition: Position; // the estimate
-    position: Position;          // the actual (ground truth)
+    estimatedPosition: Position; // estimate
+    position: Position;          // ground truth
 }
 
 // Simulation configuration
@@ -32,7 +31,7 @@ export interface SimConfig {
     width: number;           // grid width (columns)
     height: number;          // grid height (rows)
     baseCount: number;       // number of bases to place
-    droneCount: number;      // total drones available (initially unspawned at bases)
+    droneCount: number;      // total drones available
     casualtyCount: number;   // number of casualties to generate
     mean: number;            // mean μ for random translation from estimated to actual
     stdDev: number;          // standard deviation σ for translation (spread)
