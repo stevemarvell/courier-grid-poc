@@ -72,11 +72,11 @@ function formHtml(cfg: SimConfig) {
         <div class="cfg-group-label">Assets</div>
         <div class="cfg-row">
           <label>Bases</label>
-          <input name="baseCount" type="number" min="1" max="4" value="${cfg.baseCount}" />
+          <input name="baseCount" type="number" min="1" max="7" value="${cfg.baseCount}" />
         </div>
         <div class="cfg-row">
           <label>Drones</label>
-          <input name="droneCount" type="number" min="1" max="20" value="${cfg.droneCount}" />
+          <input name="droneCount" type="number" min="1" max="42" value="${cfg.droneCount}" />
         </div>
       </div>
       <div class="cfg-group">
