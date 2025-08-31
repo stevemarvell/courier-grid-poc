@@ -3,11 +3,23 @@ import { runSimulation } from './sim'
 import { render } from './renderer'
 import type { SimConfig } from './types'
 
-const canvas = document.getElementById('main-canvas') as HTMLCanvasElement;
-const sidebar = document.getElementById('sidebar-key') as HTMLDivElement;
-const topBar = document.getElementById('top-bar') as HTMLDivElement;
-const bottomBar = document.getElementById('bottom-bar') as HTMLDivElement;
-const configForm = document.getElementById('sidebar-config') as HTMLDivElement;
+// Grab DOM nodes with null checks
+const _canvas = document.getElementById('main-canvas') as HTMLCanvasElement | null
+const _sidebar = document.getElementById('sidebar-key') as HTMLDivElement | null
+const _topBar = document.getElementById('top-bar') as HTMLDivElement | null
+const _bottomBar = document.getElementById('bottom-bar') as HTMLDivElement | null
+const _configForm = document.getElementById('sidebar-config') as HTMLDivElement | null
+
+function assertEl<T>(el: T | null, name: string): T {
+  if (!el) throw new Error(`Missing DOM element: ${name}`)
+  return el
+}
+
+const canvas = assertEl(_canvas, 'main-canvas')
+const sidebar = assertEl(_sidebar, 'sidebar-key')
+const topBar = assertEl(_topBar, 'top-bar')
+const bottomBar = assertEl(_bottomBar, 'bottom-bar')
+const configForm = assertEl(_configForm, 'sidebar-config')
 
 let cfg: SimConfig = {
   width: 50,
@@ -19,16 +31,16 @@ let cfg: SimConfig = {
   stdDev: 2,
   maxTranslation: 10,
   seed: undefined
-};
+}
 
 function fitCanvasToGrid(canvas: HTMLCanvasElement, cfg: SimConfig) {
-  const dpr = window.devicePixelRatio || 1;
-  const cssH = 800;
-  const cssW = Math.round(cssH * (cfg.width / cfg.height));
-  canvas.style.width = cssW + 'px';
-  canvas.style.height = cssH + 'px';
-  canvas.width = Math.round(cssW * dpr);
-  canvas.height = Math.round(cssH * dpr);
+  const dpr = window.devicePixelRatio || 1
+  const cssH = 800
+  const cssW = Math.round(cssH * (cfg.width / cfg.height))
+  canvas.style.width = cssW + 'px'
+  canvas.style.height = cssH + 'px'
+  canvas.width = Math.round(cssW * dpr)
+  canvas.height = Math.round(cssH * dpr)
 }
 
 function renderConfigPanel(cfg: SimConfig) {
@@ -83,29 +95,29 @@ function renderConfigPanel(cfg: SimConfig) {
         <button type="submit" class="btn-primary">Run Simulation</button>
       </div>
     </form>
-  `;
+  `
 
-  const form = document.getElementById('cfg-form') as HTMLFormElement;
+  const form = document.getElementById('cfg-form') as HTMLFormElement
   form.onsubmit = async (e) => {
-    e.preventDefault();
-    const data = new FormData(form);
-    cfg.width = Number(data.get('width'));
-    cfg.height = Number(data.get('height'));
-    cfg.baseCount = Number(data.get('baseCount'));
-    cfg.droneCount = Number(data.get('droneCount'));
-    cfg.casualtyCount = Number(data.get('casualtyCount'));
-    cfg.mean = Number(data.get('mean'));
-    cfg.stdDev = Number(data.get('stdDev'));
-    cfg.maxTranslation = Number(data.get('maxTranslation'));
-    const seedValue = data.get('seed');
-    cfg.seed = seedValue === '' ? undefined : Number(seedValue);
-    await rerunSimulation();
-  };
+    e.preventDefault()
+    const data = new FormData(form)
+    cfg.width = Number(data.get('width'))
+    cfg.height = Number(data.get('height'))
+    cfg.baseCount = Number(data.get('baseCount'))
+    cfg.droneCount = Number(data.get('droneCount'))
+    cfg.casualtyCount = Number(data.get('casualtyCount'))
+    cfg.mean = Number(data.get('mean'))
+    cfg.stdDev = Number(data.get('stdDev'))
+    cfg.maxTranslation = Number(data.get('maxTranslation'))
+    const seedValue = data.get('seed')
+    cfg.seed = seedValue === '' ? undefined : Number(seedValue)
+    await rerunSimulation()
+  }
 }
 
 async function rerunSimulation() {
-  topBar.textContent = 'MASAR Demo';
-  bottomBar.textContent = `© Steve Marvell ${new Date().getFullYear()}`;
+  topBar.textContent = 'MASAR Demo'
+  bottomBar.textContent = `© Steve Marvell ${new Date().getFullYear()}`
 
   sidebar.innerHTML = `
     <div style="margin-bottom:8px;"><strong>Key</strong></div>
@@ -113,14 +125,14 @@ async function rerunSimulation() {
     <div><span class="key drone"></span>Drone</div>
     <div><span class="key ep"></span>Estimated Position</div>
     <div><span class="key ap"></span>Actual Position</div>
-  `;
+  `
 
-  renderConfigPanel(cfg);
+  renderConfigPanel(cfg)
 
   const result = await runSimulation(cfg, {
     beforeSimStart: ({ cfg }) => fitCanvasToGrid(canvas, cfg)
-  });
-  render(canvas, result);
+  })
+  render(canvas, result)
 }
 
-window.onload = rerunSimulation;
+window.onload = rerunSimulation

@@ -1,4 +1,4 @@
-// /src/type.ts
+// /src/types.ts
 export interface Position {
     x: number;
     y: number;

@@ -30,17 +30,19 @@ function makeRng(seed?: number) {
 export async function runSimulation(cfg: SimConfig, hooks?: Partial<SimHooks>): Promise<SimResult> {
   const rng = makeRng(cfg.seed);
 
-  // 1) Bases (center/bottom), all drones unspawned
-  const bases: Base[] = [];
+  // 1) Distribute drones across bases without multiplying total
+  const bases: Base[] = []
+  const per = Math.floor(cfg.droneCount / cfg.baseCount)
+  const extra = cfg.droneCount % cfg.baseCount
   for (let i = 0; i < cfg.baseCount; i++) {
+    const allot = per + (i < extra ? 1 : 0)
     bases.push({
       id: i + 1,
       position: { x: Math.floor(cfg.width / 2), y: cfg.height - 1 },
-      capacity: cfg.droneCount,
-      unspawned: cfg.droneCount
-    });
+      capacity: allot,
+      unspawned: allot
+    })
   }
-
   // 2) Drones: none spawned initially
   const drones: Drone[] = [];
 
@@ -48,18 +50,24 @@ export async function runSimulation(cfg: SimConfig, hooks?: Partial<SimHooks>): 
   const casualties: Casualty[] = [];
   for (let i = 0; i < cfg.casualtyCount; i++) {
     const estimatedPosition: Position = {
-      x: rng.int(cfg.width),                         // seeded
-      y: rng.int(Math.floor(cfg.height * 0.66))      // seeded
-    };
+      x: rng.int(cfg.width),
+      y: rng.int(Math.floor(cfg.height * 0.66))
+    }
+
+    // Derive a unique, deterministic seed per casualty when cfg.seed is set
+    const derivedSeed = cfg.seed == null ? undefined : cfg.seed + i * 9973
+
     const position: Position = randomNearbyPosition(
       estimatedPosition,
       cfg.stdDev,
       { width: cfg.width, height: cfg.height },
       cfg.maxTranslation,
       cfg.maxTranslation,
-      cfg.seed // pass seed so offset uses same source
-    );
-    casualties.push({ id: i + 1, estimatedPosition, position });
+      derivedSeed,
+      cfg.mean
+    )
+
+    casualties.push({ id: i + 1, estimatedPosition, position })
   }
 
   const state: SimState = { bases, drones, casualties };
