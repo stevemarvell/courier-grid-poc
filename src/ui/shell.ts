@@ -4,6 +4,7 @@ export interface Ui {
   key: HTMLDivElement
   controls: HTMLDivElement
   log: HTMLDivElement
+  transcript: HTMLDivElement
   setTopBar(text: string): void
   setBottomBar(text: string): void
 }
@@ -17,15 +18,17 @@ export function initShell(): Ui {
   const key = ensure(sidebar, 'sidebar-key')
   const controls = ensure(sidebar, 'sidebar-controls')
   const log = ensure(sidebar, 'sidebar-log')
+  const transcript = ensure(sidebar, 'sidebar-transcript')
 
-  // Enforce visual order: Key → Controls → Log
-  sidebar.append(key, controls, log)
+  // Enforce order: Key → Controls → Log → Transcript
+  sidebar.append(key, controls, log, transcript)
 
   return {
     canvas,
     key,
     controls,
     log,
+    transcript,
     setTopBar: (t) => { top.textContent = t },
     setBottomBar: (t) => { bottom.textContent = t }
   }

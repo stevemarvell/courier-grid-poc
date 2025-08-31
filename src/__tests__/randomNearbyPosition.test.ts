@@ -1,4 +1,4 @@
-import { randomNearbyPosition } from '../randomNearbyPosition'
+import { randomNearbyPosition } from '../geo/randomNearbyPosition'
 
 describe('randomNearbyPosition', () => {
   const bounds = { width: 50, height: 40 }

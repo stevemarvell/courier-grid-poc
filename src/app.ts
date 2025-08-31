@@ -1,12 +1,17 @@
 // /src/app.ts
-import type { SimConfig, SimResult, Position } from './types'
+import type { SimConfig, SimResult } from './types'
+import { Position, posEq } from './geo/position'
+import { fix } from './utils/num'
+
 import { initShell } from './ui/shell'
 import { renderKey } from './ui/key'
 import { renderLog, pushLog } from './ui/log'
+import { renderTranscript, pushTranscript } from './ui/transcript'
 import { mountControls, setSeedInput } from './ui/controls'
 import { runSimulation } from './sim'
 import { render } from './renderer'
 import { MultiReactiveSearcher } from './search'
+import { Radio } from './comms/radio'
 
 const defaultCfg: SimConfig = {
   width: 50,
@@ -29,11 +34,12 @@ export function boot() {
 
   renderKey(ui.key)
   renderLog(ui.log)
+  renderTranscript(ui.transcript)
 
   renderEmptyGrid(ui.canvas, defaultCfg)
 
   mountControls(ui.controls, defaultCfg, async (cfg) => {
-    await runReactive(ui.canvas, ui.controls, ui.log, cfg)
+    await runReactive(ui.canvas, ui.controls, ui.log, ui.transcript, cfg)
   })
 }
 
@@ -41,9 +47,9 @@ async function runReactive(
   canvas: HTMLCanvasElement,
   controlsEl: HTMLElement,
   logEl: HTMLElement,
+  transcriptEl: HTMLElement,
   cfg: SimConfig
 ) {
-  // seed: ensure, persist into form, log START seed
   if (cfg.seed == null) {
     const seed = genSeed()
     cfg.seed = seed
@@ -51,10 +57,23 @@ async function runReactive(
   }
   pushLog(logEl, `t: 0 START seed ${cfg.seed}`)
 
+  const radio = new Radio()
+  radio.setTick(0)
+  const unsub = radio.subscribe(m => {
+    pushTranscript(transcriptEl, `${m.id} t:${m.tick} ${m.from} ${m.tokens.join(' ')}`)
+  })
+  radio.say('command', '-', '-', 'START', 'seed', cfg.seed!)
+
   const base = await runSimulation(cfg, {
     beforeSimStart: ({ cfg }) => fitCanvasToGrid(canvas, cfg)
   })
-  if (!base.casualties.length) { render(canvas, base); pushLog(logEl, `t: 0 END`); return }
+  if (!base.casualties.length) {
+    render(canvas, base)
+    radio.say('command', '-', '-', 'END')
+    pushLog(logEl, `t: 0 END`)
+    unsub()
+    return
+  }
 
   const cas = base.casualties[0]
   const searcher = new MultiReactiveSearcher(
@@ -63,7 +82,7 @@ async function runReactive(
 
   const view: SimResult = {
     ...base,
-    drones: base.drones.map(d => ({ ...d })), // unspawned with launchAtTick set
+    drones: base.drones.map(d => ({ ...d })),
     bases: base.bases.map(b => ({ ...b }))
   }
 
@@ -80,39 +99,45 @@ async function runReactive(
 
     while (tickAcc >= 1) {
       tickAcc -= 1
+      radio.setTick(tick)
 
-      // 1) LAUNCH: launch due drones (log LAUNCH)
+      // Launch due drones — drones declare LAUNCH
       let foundDroneId: number | null = null
       for (const d of view.drones) {
         if (!d.spawned && tick >= d.launchAtTick) {
           d.spawned = true
           d.path = [d.position]
           d.step = 0
-          pushLog(logEl, `t: ${tick} LAUNCH drone #${d.id} base #${d.baseId}`)
-          if (eq(d.position, cas.position)) foundDroneId = d.id
+          pushLog(logEl, `t: ${tick} LAUNCH drone#${d.id} base#${d.baseId}`)
+          radio.say(`drone#${d.id}`, '-', '-', 'LAUNCH', 'base', `base#${d.baseId}`)
+          if (posEq(d.position, cas.position)) foundDroneId = d.id
         }
       }
 
-      // 2) Move each spawned drone one cell this tick
+      // Move spawned drones; announce SEARCHED x y POD 1.0
       if (foundDroneId == null) {
         const claimed = new Set<string>()
         for (const d of view.drones) {
           if (!d.spawned) continue
           const current = d.path![d.path!.length - 1]
-          if (eq(current, cas.position)) { foundDroneId = d.id; continue }
+          if (posEq(current, cas.position)) { foundDroneId = d.id; continue }
           const next: Position = searcher.nextStep(current, claimed)
           d.path!.push(next)
           d.position = next
           d.step = d.path!.length - 1
-          if (eq(next, cas.position)) foundDroneId = d.id
+          radio.say(`drone#${d.id}`, next.x, next.y, 'SEARCHED', 'POD', fix(1, 1)) // "1.0"
+          if (posEq(next, cas.position)) foundDroneId = d.id
         }
       }
 
-      // 3) FOUND → END
       if (foundDroneId != null) {
-        pushLog(logEl, `t: ${tick} FOUND drone #${foundDroneId} casualty #${cas.id}`)
+        const d = view.drones.find(dr => dr.id === foundDroneId)!
+        pushLog(logEl, `t: ${tick} FOUND drone#${foundDroneId} casualty#${cas.id}`)
+        radio.say(`drone#${foundDroneId}`, d.position.x, d.position.y, 'FOUND', `casualty#${cas.id}`)
         render(canvas, view)
         pushLog(logEl, `t: ${tick} END`)
+        radio.say('command', '-', '-', 'END')
+        unsub()
         return
       }
 
@@ -134,8 +159,6 @@ function genSeed(): number {
   }
   return Math.floor(1 + Math.random() * 0x7ffffffe)
 }
-
-function eq(a: Position, b: Position) { return a.x === b.x && a.y === b.y }
 
 function renderEmptyGrid(canvas: HTMLCanvasElement, cfg: SimConfig) {
   fitCanvasToGrid(canvas, cfg)

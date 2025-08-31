@@ -1,5 +1,6 @@
 import { randomNormal, randomLcg } from 'd3-random'
-import type { Position } from './types'
+
+import {Position} from "./position";
 
 /**
  * Random nearby Position using a normal sampler.
@@ -22,5 +23,5 @@ export function randomNearbyPosition(
 
   const x = Math.max(0, Math.min(bounds.width - 1, center.x + dx))
   const y = Math.max(0, Math.min(bounds.height - 1, center.y + dy))
-  return { x, y }
+  return { x, y } as Position
 }

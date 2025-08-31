@@ -6,11 +6,11 @@ import type {
   SimState,
   Base,
   Drone,
-  Casualty,
-  Position
+  Casualty
 } from './types'
 import { randomNormal, randomLcg } from 'd3-random'
-import { randomNearbyPosition } from './randomNearbyPosition'
+import { randomNearbyPosition } from './geo/randomNearbyPosition'
+import {Position} from "./geo/position";
 
 function makeRng(seed?: number) {
   const source = seed == null ? null : randomLcg(seed)

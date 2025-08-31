@@ -1,5 +1,6 @@
 // /src/search.ts
-import type { Position } from './types'
+
+import {Position} from "./geo/position";
 
 type GridBelief = number[][]
 
@@ -31,12 +32,12 @@ function buildBelief(width: number, height: number, ep: Position, sigma: number)
 }
 
 export class MultiReactiveSearcher {
-  private width: number
-  private height: number
-  private belief: GridBelief
+  private readonly width: number
+  private readonly height: number
+  private readonly belief: GridBelief
   private visited: Set<string>
   private casualty: Position
-  private ep: Position
+  private readonly ep: Position
 
   constructor(
     width: number,
