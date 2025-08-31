@@ -1,19 +1,25 @@
+import { randomNormal, randomLcg } from 'd3-random'
+import type { Position } from './types'
+
+/**
+ * Random nearby Position using d3-random's normal sampler.
+ * If seed is provided, uses a seeded source for reproducibility.
+ */
 export function randomNearbyPosition(
-  center: { x: number; y: number },
+  center: Position,
   sigma: number,
   bounds: { width: number; height: number },
-  maxDx: number = 6,
-  maxDy: number = 6
-): { x: number; y: number } {
-  const randomNormal = (stddev: number) => {
-    let u = 0, v = 0;
-    while (u === 0) u = Math.random();
-    while (v === 0) v = Math.random();
-    return Math.round(Math.cos(2 * Math.PI * u) * Math.sqrt(-2 * Math.log(v)) * stddev);
-  };
-  let dx = Math.max(-maxDx, Math.min(maxDx, randomNormal(sigma)));
-  let dy = Math.max(-maxDy, Math.min(maxDy, randomNormal(sigma)));
-  let x = Math.max(0, Math.min(bounds.width - 1, center.x + dx));
-  let y = Math.max(0, Math.min(bounds.height - 1, center.y + dy));
+  maxDx: number = 10,
+  maxDy: number = 10,
+  seed?: number
+): Position {
+  const source = seed == null ? undefined : randomLcg(seed);
+  const normal = source ? randomNormal.source(source)(0, sigma) : randomNormal(0, sigma);
+
+  const dx = Math.max(-maxDx, Math.min(maxDx, Math.round(normal())));
+  const dy = Math.max(-maxDy, Math.min(maxDy, Math.round(normal())));
+
+  const x = Math.max(0, Math.min(bounds.width - 1, center.x + dx));
+  const y = Math.max(0, Math.min(bounds.height - 1, center.y + dy));
   return { x, y };
 }
