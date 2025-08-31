@@ -1,13 +1,7 @@
 // /src/sim.ts
 import type {
-  SimConfig,
-  SimHooks,
-  SimResult,
-  SimState,
-  Base,
-  Drone,
-  Casualty,
-  Position
+  SimConfig, SimHooks, SimResult, SimState,
+  Base, Drone, Casualty, Position
 } from './types'
 import { randomNormal, randomLcg } from 'd3-random'
 import { randomNearbyPosition } from './randomNearbyPosition'
@@ -26,7 +20,7 @@ function makeRng(seed?: number) {
 export async function runSimulation(cfg: SimConfig, hooks?: Partial<SimHooks>): Promise<SimResult> {
   const rng = makeRng(cfg.seed)
 
-  // Bases: centred bottom row, distribute drone capacity across bases
+  // Bases
   const bases: Base[] = []
   const per = Math.floor(cfg.droneCount / cfg.baseCount)
   const extra = cfg.droneCount % cfg.baseCount
@@ -40,7 +34,7 @@ export async function runSimulation(cfg: SimConfig, hooks?: Partial<SimHooks>): 
     })
   }
 
-  // Casualties: EP from rng, AP from nearby normal with clamp
+  // Casualties
   const casualties: Casualty[] = []
   for (let i = 0; i < cfg.casualtyCount; i++) {
     const estimatedPosition: Position = {
@@ -60,16 +54,15 @@ export async function runSimulation(cfg: SimConfig, hooks?: Partial<SimHooks>): 
     casualties.push({ id: i + 1, estimatedPosition, position })
   }
 
-  // Spawn drones, round-robin across bases, path starts at spawn cell
+  // Drones: schedule launches in ticks
   const drones: Drone[] = []
   if (cfg.droneCount > 0 && bases.length > 0) {
     const counts = bases.map(b => b.unspawned)
     let idx = 0
     for (let d = 0; d < cfg.droneCount; d++) {
-      // find next base with capacity
       let picked = -1
-      for (let tries = 0; tries < bases.length; tries++) {
-        const i = (idx + tries) % bases.length
+      for (let t = 0; t < bases.length; t++) {
+        const i = (idx + t) % bases.length
         if (counts[i] > 0) { picked = i; break }
       }
       if (picked === -1) picked = 0
@@ -77,9 +70,16 @@ export async function runSimulation(cfg: SimConfig, hooks?: Partial<SimHooks>): 
       idx = (picked + 1) % bases.length
 
       const spawn = bases[picked].position
-      drones.push({ id: d + 1, position: spawn, spawned: true, path: [spawn], step: 0 })
+      drones.push({
+        id: d + 1,
+        baseId: bases[picked].id,
+        position: spawn,
+        spawned: false,
+        launchAtTick: Math.max(0, d * cfg.launchEveryTicks),
+        path: undefined,
+        step: undefined
+      })
     }
-    // update unspawned
     for (let i = 0; i < bases.length; i++) bases[i].unspawned = Math.max(0, counts[i])
   }
 

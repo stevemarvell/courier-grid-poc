@@ -1,14 +1,13 @@
-/* /src/styles.css */
 :root {
   --bg: #0b0f14;
   --panel: #0a0f14;
   --border: #1d2733;
   --ink: #e6ebf2;
 
-  --base: #5b6977;      /* steel grey base */
-  --drone: #ffffff;     /* white drones */
-  --ep: #f59e42;        /* estimated position amber (square) */
-  --ap: #f43f5e;        /* actual position red (circle) */
+  --base: #5b6977;
+  --drone: #ffffff;
+  --ep: #f59e42;
+  --ap: #f43f5e;
 
   --radius-lg: 12px;
   --space-1: 4px;
@@ -35,7 +34,7 @@ body {
   height: 100vh;
   display: grid;
   grid-template-rows: auto 1fr auto;
-  grid-template-columns: 210px 1fr;
+  grid-template-columns: 300px 1fr;           /* was 210px */
   grid-template-areas:
     "top-bar top-bar"
     "sidebar main"
@@ -67,31 +66,24 @@ body {
   grid-area: sidebar;
   padding: var(--space-3);
   border-right: 1px solid var(--border);
-  font-family: var(--font);
   font-size: var(--fs-200);
   color: var(--ink);
   letter-spacing: 0.02em;
-  min-width: 170px;
-  max-width: 260px;
+  min-width: 260px;                           /* was 170px */
+  max-width: 360px;                           /* was 260px */
 }
 
 /* Config Panel */
 #sidebar-config { margin-bottom: 18px; }
 
-.cfg-form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+.cfg-form { display: flex; flex-direction: column; gap: 12px; }
 .cfg-group {
   border-bottom: 1px solid #232f3b;
   margin-bottom: 10px;
   padding-bottom: 2px;
   padding-top: 2px;
 }
-.cfg-group:last-child {
-  border-bottom: none;
-}
+.cfg-group:last-child { border-bottom: none; }
 .cfg-group-label {
   margin-bottom: 2px;
   color: #90a4bc;
@@ -101,23 +93,29 @@ body {
   letter-spacing: 0.04em;
 }
 .cfg-row {
-  display: grid;
-  grid-template-columns: 120px 100px; /* label, input */
+  display: flex;
   align-items: center;
-  column-gap: 8px;
+  justify-content: space-between;
   margin-bottom: 3px;
 }
-
 .cfg-row label {
+  min-width: 92px;
   text-align: right;
-  margin: 0;
+  margin-right: 8px;
+  font-size: 13px;
 }
-
 .cfg-row input[type="number"] {
-  width: 100%; /* fills the 100px track */
+  width: 100px;
+  padding: 2px 6px;
+  background: #181e25;
+  color: #fff;
+  border: 1px solid #384150;
+  border-radius: 3px;
+  font-size: 13px;
+  text-align: right;
 }
 
-/* Primary (blue) button */
+/* Primary button */
 .btn-primary {
   width: 100%;
   background: #348fff;
@@ -126,98 +124,63 @@ body {
   padding: 8px 0;
   border-radius: 4px;
   font-size: 15px;
-  font-family: var(--font);
   font-weight: 600;
   cursor: pointer;
   box-shadow: 0 1px 4px 0 #06152136;
   margin-top: 2px;
   margin-bottom: 2px;
-  transition: background .15s;
 }
 .btn-primary:hover, .btn-primary:focus { background: #1969c7; }
 
-/* Legend (Key) */
-#sidebar-key {
-  margin-top: 18px;
-}
+/* Key section */
+#sidebar-key { margin-top: 6px; margin-bottom: 12px; }
 #sidebar-key > div {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  line-height: 20px;
-  margin-bottom: 6px;
+  display: flex; align-items: center; gap: 8px; line-height: 20px; margin-bottom: 6px;
 }
-
-/* Base swatch: square with centered number */
 .key.base {
-  position: relative;
-  width: 18px;
-  height: 18px;
-  border-radius: 2px;
-  background: var(--base);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  width: 18px; height: 18px; border-radius: 2px; background: --base;
+  color: #fff; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center;
 }
-
-/* EP swatch: amber square with id (placeholder “#”) */
 .key.ep {
-  position: relative;
-  width: 18px;
-  height: 18px;
-  border-radius: 2px;
-  background: var(--ep);
-  color: #222;
-  font-size: 11px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  width: 18px; height: 18px; border-radius: 2px; background: var(--ep);
+  color: #222; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center;
 }
-.key.ep::after {
-  /* Replace content via JS if you want a dynamic id; for legend, a sample label */
-  content: "E";
-}
-
-/* AP swatch: red circle with id (placeholder) */
+.key.ep::after { content: "E"; }
 .key.ap {
-  position: relative;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--ap);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%; background: var(--ap);
+  color: #fff; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center;
 }
-.key.ap::after {
-  content: "A";
-}
-
-/* Drone swatch: white circle with id (placeholder) */
+.key.ap::after { content: "A"; }
 .key.drone {
-  position: relative;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--drone);
-  color: #222;
-  font-size: 11px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%; background: var(--drone);
+  color: #222; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center;
   box-shadow: inset 0 0 0 1px #aaa;
 }
-.key.drone::after {
-  content: "D";
+.key.drone::after { content: "D"; }
+
+/* Log section */
+.log-label {
+  margin-top: 10px;
+  margin-bottom: 4px;
+  color: #90a4bc;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
+#sidebar-log .log-box {
+  height: 120px;
+  overflow-y: auto;
+  background: #0e1520;
+  border: 1px solid #232f3b;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #cbd5e1;
+}
+#sidebar-log .log-box > div { white-space: pre-wrap; }
 
 /* Canvas */
 .main-canvas, #main-canvas {

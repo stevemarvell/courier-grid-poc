@@ -20,6 +20,8 @@ export function mountConfig(
       mean: num(data, 'mean'),
       stdDev: num(data, 'stdDev'),
       maxTranslation: num(data, 'maxTranslation'),
+      playbackTicksPerSec: num(data, 'playbackTicksPerSec'),
+      launchEveryTicks: num(data, 'launchEveryTicks'),
       seed: str(data, 'seed') === '' ? undefined : Number(str(data, 'seed'))
     }
     onSubmit(next)
@@ -70,6 +72,17 @@ function formHtml(cfg: SimConfig) {
           <input name="maxTranslation" type="number" min="1" max="50" step="1" value="${cfg.maxTranslation}" />
         </div>
       </div>
+      <div class="cfg-group">
+        <div class="cfg-group-label">Timing (ticks)</div>
+        <div class="cfg-row">
+          <label>Playback (ticks/s)</label>
+          <input name="playbackTicksPerSec" type="number" min="1" step="1" value="${cfg.playbackTicksPerSec}" />
+        </div>
+        <div class="cfg-row">
+          <label>Launch every (ticks)</label>
+          <input name="launchEveryTicks" type="number" min="0" step="1" value="${cfg.launchEveryTicks}" />
+        </div>
+      </div>
       <div class="cfg-row" style="margin-top:14px; margin-bottom:6px;">
         <label>Seed</label>
         <input name="seed" type="number" placeholder="random" value="${cfg.seed ?? ''}" />
@@ -81,16 +94,9 @@ function formHtml(cfg: SimConfig) {
   `
 }
 
-// /src/ui/configPanel.ts
-
-// add a tiny structural type
+// structural helpers
 type FormDataLike = { get(name: string): unknown }
-
-function num(fd: FormDataLike, key: string): number {
-  return Number(fd.get(key))
-}
+function num(fd: FormDataLike, key: string): number { return Number(fd.get(key)) }
 function str(fd: FormDataLike, key: string): string {
-  const v = fd.get(key)
-  return v == null ? '' : String(v)
+  const v = fd.get(key); return v == null ? '' : String(v)
 }
-
