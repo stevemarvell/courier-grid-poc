@@ -54,7 +54,7 @@ export async function runSimulation(cfg: SimConfig, hooks?: Partial<SimHooks>): 
     casualties.push({ id: i + 1, estimatedPosition, position })
   }
 
-  // Drones: schedule launches in ticks
+  // Drones: schedule with first-launch cost
   const drones: Drone[] = []
   if (cfg.droneCount > 0 && bases.length > 0) {
     const counts = bases.map(b => b.unspawned)
@@ -75,7 +75,7 @@ export async function runSimulation(cfg: SimConfig, hooks?: Partial<SimHooks>): 
         baseId: bases[picked].id,
         position: spawn,
         spawned: false,
-        launchAtTick: Math.max(0, d * cfg.launchEveryTicks),
+        launchAtTick: (d + 1) * Math.max(1, cfg.launchEveryTicks), // first drone pays launch time
         path: undefined,
         step: undefined
       })

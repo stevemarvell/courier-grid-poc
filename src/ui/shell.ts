@@ -2,7 +2,7 @@
 export interface Ui {
   canvas: HTMLCanvasElement
   key: HTMLDivElement
-  config: HTMLDivElement
+  controls: HTMLDivElement
   log: HTMLDivElement
   setTopBar(text: string): void
   setBottomBar(text: string): void
@@ -13,16 +13,18 @@ export function initShell(): Ui {
   const top = get('top-bar') as HTMLDivElement
   const bottom = get('bottom-bar') as HTMLDivElement
 
-  // Ensure sidebar child containers exist
   const sidebar = get('sidebar') as HTMLDivElement
   const key = ensure(sidebar, 'sidebar-key')
-  const config = ensure(sidebar, 'sidebar-config')
+  const controls = ensure(sidebar, 'sidebar-controls')
   const log = ensure(sidebar, 'sidebar-log')
+
+  // Enforce visual order: Key → Controls → Log
+  sidebar.append(key, controls, log)
 
   return {
     canvas,
     key,
-    config,
+    controls,
     log,
     setTopBar: (t) => { top.textContent = t },
     setBottomBar: (t) => { bottom.textContent = t }

@@ -3,7 +3,7 @@ import type { SimConfig, SimResult, Position } from './types'
 import { initShell } from './ui/shell'
 import { renderKey } from './ui/key'
 import { renderLog, pushLog } from './ui/log'
-import { mountConfig } from './ui/configPanel'
+import { mountControls, setSeedInput } from './ui/controls'
 import { runSimulation } from './sim'
 import { render } from './renderer'
 import { MultiReactiveSearcher } from './search'
@@ -32,16 +32,29 @@ export function boot() {
 
   renderEmptyGrid(ui.canvas, defaultCfg)
 
-  mountConfig(ui.config, defaultCfg, async (cfg) => {
-    await runReactive(ui.canvas, ui.log, cfg)
+  mountControls(ui.controls, defaultCfg, async (cfg) => {
+    await runReactive(ui.canvas, ui.controls, ui.log, cfg)
   })
 }
 
-async function runReactive(canvas: HTMLCanvasElement, logEl: HTMLElement, cfg: SimConfig) {
+async function runReactive(
+  canvas: HTMLCanvasElement,
+  controlsEl: HTMLElement,
+  logEl: HTMLElement,
+  cfg: SimConfig
+) {
+  // seed: ensure, persist into form, log START seed
+  if (cfg.seed == null) {
+    const seed = genSeed()
+    cfg.seed = seed
+    setSeedInput(controlsEl, seed)
+  }
+  pushLog(logEl, `t: 0 START seed ${cfg.seed}`)
+
   const base = await runSimulation(cfg, {
     beforeSimStart: ({ cfg }) => fitCanvasToGrid(canvas, cfg)
   })
-  if (!base.casualties.length) { render(canvas, base); return }
+  if (!base.casualties.length) { render(canvas, base); pushLog(logEl, `t: 0 END`); return }
 
   const cas = base.casualties[0]
   const searcher = new MultiReactiveSearcher(
@@ -68,39 +81,58 @@ async function runReactive(canvas: HTMLCanvasElement, logEl: HTMLElement, cfg: S
     while (tickAcc >= 1) {
       tickAcc -= 1
 
-      // launch first, then move, so newly launched moves this tick
+      // 1) LAUNCH: launch due drones (log LAUNCH)
+      let foundDroneId: number | null = null
       for (const d of view.drones) {
         if (!d.spawned && tick >= d.launchAtTick) {
           d.spawned = true
           d.path = [d.position]
           d.step = 0
-          pushLog(logEl, `t ${tick}: LAUNCH drone #${d.id} base #${d.baseId} position { ${d.position.x}, ${d.position.y} }`)
+          pushLog(logEl, `t: ${tick} LAUNCH drone #${d.id} base #${d.baseId}`)
+          if (eq(d.position, cas.position)) foundDroneId = d.id
         }
       }
 
-      if (view.drones.some(dr => dr.spawned && eq(dr.position, cas.position))) break
+      // 2) Move each spawned drone one cell this tick
+      if (foundDroneId == null) {
+        const claimed = new Set<string>()
+        for (const d of view.drones) {
+          if (!d.spawned) continue
+          const current = d.path![d.path!.length - 1]
+          if (eq(current, cas.position)) { foundDroneId = d.id; continue }
+          const next: Position = searcher.nextStep(current, claimed)
+          d.path!.push(next)
+          d.position = next
+          d.step = d.path!.length - 1
+          if (eq(next, cas.position)) foundDroneId = d.id
+        }
+      }
 
-      const claimed = new Set<string>()
-      for (const d of view.drones) {
-        if (!d.spawned) continue
-        const current = d.path![d.path!.length - 1]
-        if (eq(current, cas.position)) continue
-        const next: Position = searcher.nextStep(current, claimed)
-        d.path!.push(next)
-        d.position = next
-        d.step = d.path!.length - 1
+      // 3) FOUND → END
+      if (foundDroneId != null) {
+        pushLog(logEl, `t: ${tick} FOUND drone #${foundDroneId} casualty #${cas.id}`)
+        render(canvas, view)
+        pushLog(logEl, `t: ${tick} END`)
+        return
       }
 
       tick += 1
     }
 
     render(canvas, view)
-
-    if (view.drones.some(dr => dr.spawned && eq(dr.position, cas.position))) return
     requestAnimationFrame(loop)
   }
 
   requestAnimationFrame(loop)
+}
+
+function genSeed(): number {
+  if (window.crypto && 'getRandomValues' in window.crypto) {
+    const a = new Uint32Array(1)
+    window.crypto.getRandomValues(a)
+    return a[0] === 0 ? 1 : a[0]
+  }
+  return Math.floor(1 + Math.random() * 0x7ffffffe)
 }
 
 function eq(a: Position, b: Position) { return a.x === b.x && a.y === b.y }

@@ -13,7 +13,7 @@ export interface Drone {
     baseId: number
     position: Position
     spawned: boolean
-    launchAtTick: number     // when this drone launches (in ticks)
+    launchAtTick: number     // tick when this drone launches (includes first-launch cost)
     path?: Position[]        // visited cells
     step?: number            // render index into path
 }
@@ -33,10 +33,10 @@ export interface SimConfig {
     mean: number
     stdDev: number
     maxTranslation: number
-    // time is in ticks
+    // time in ticks
     playbackTicksPerSec: number   // ticks per real-second
-    launchEveryTicks: number      // tick gap between launches
-    seed?: number
+    launchEveryTicks: number      // gap between launches, in ticks
+    seed?: number                 // if undefined, we generate one and persist
 }
 
 export interface SimState { bases: Base[]; drones: Drone[]; casualties: Casualty[] }

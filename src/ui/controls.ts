@@ -1,13 +1,30 @@
-// /src/ui/configPanel.ts
+// /src/ui/controls.ts
 import type { SimConfig } from '../types'
 
-export function mountConfig(
+const SEED_KEY = 'masar.seed'
+
+export function mountControls(
   container: HTMLElement,
   cfg: SimConfig,
   onSubmit: (cfg: SimConfig) => void
 ) {
+  // load persisted seed if present
+  if (cfg.seed == null) {
+    const saved = localStorage.getItem(SEED_KEY)
+    if (saved != null && saved !== '') cfg.seed = Number(saved)
+  }
+
   container.innerHTML = formHtml(cfg)
+
   const form = container.querySelector('#cfg-form') as HTMLFormElement
+  const seedInput = container.querySelector('#seed-input') as HTMLInputElement
+  const seedClear = container.querySelector('#seed-clear') as HTMLButtonElement
+
+  seedClear.onclick = () => {
+    seedInput.value = ''
+    localStorage.removeItem(SEED_KEY)
+  }
+
   form.onsubmit = (e) => {
     e.preventDefault()
     const data = new FormData(form)
@@ -24,8 +41,17 @@ export function mountConfig(
       launchEveryTicks: num(data, 'launchEveryTicks'),
       seed: str(data, 'seed') === '' ? undefined : Number(str(data, 'seed'))
     }
+    // persist if present
+    if (next.seed != null) localStorage.setItem(SEED_KEY, String(next.seed))
     onSubmit(next)
   }
+}
+
+export function setSeedInput(container: HTMLElement, seed: number | undefined) {
+  const seedInput = container.querySelector('#seed-input') as HTMLInputElement | null
+  if (!seedInput) return
+  seedInput.value = seed == null ? '' : String(seed)
+  if (seed != null) localStorage.setItem('masar.seed', String(seed))
 }
 
 function formHtml(cfg: SimConfig) {
@@ -72,6 +98,7 @@ function formHtml(cfg: SimConfig) {
           <input name="maxTranslation" type="number" min="1" max="50" step="1" value="${cfg.maxTranslation}" />
         </div>
       </div>
+
       <div class="cfg-group">
         <div class="cfg-group-label">Timing (ticks)</div>
         <div class="cfg-row">
@@ -80,13 +107,18 @@ function formHtml(cfg: SimConfig) {
         </div>
         <div class="cfg-row">
           <label>Launch every (ticks)</label>
-          <input name="launchEveryTicks" type="number" min="0" step="1" value="${cfg.launchEveryTicks}" />
+          <input name="launchEveryTicks" type="number" min="1" step="1" value="${cfg.launchEveryTicks}" />
         </div>
       </div>
-      <div class="cfg-row" style="margin-top:14px; margin-bottom:6px;">
+
+      <div class="cfg-row seed-row" style="margin-top:10px;">
         <label>Seed</label>
-        <input name="seed" type="number" placeholder="random" value="${cfg.seed ?? ''}" />
+        <div class="seed-wrap">
+          <input id="seed-input" name="seed" type="number" placeholder="random" value="${cfg.seed ?? ''}" />
+          <button type="button" id="seed-clear" class="btn-icon" title="Clear seed" aria-label="Clear seed">×</button>
+        </div>
       </div>
+
       <div>
         <button type="submit" class="btn-primary">Run Simulation</button>
       </div>
