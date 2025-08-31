@@ -1,8 +1,7 @@
 // /src/search.ts
 import type { Position } from './types'
-
-type GridBelief = number[][]
-type Formatted = { x: number; y: number }
+import type { Grid } from './grid'
+import { makeGrid, getCell, setCell, forEachCell } from './grid'
 
 function stepToward(a: Position, b: Position): Position {
   if (a.x !== b.x) return { x: a.x + Math.sign(b.x - a.x), y: a.y }
@@ -16,27 +15,24 @@ function gaussian(ep: Position, x: number, y: number, sigma: number) {
   return Math.exp(-(dx * dx + dy * dy) / (2 * sigma * sigma))
 }
 
-function normalise(b: GridBelief) {
+function normalise(b: Grid<number>) {
   let s = 0
-  for (const row of b) for (const v of row) s += v
+  forEachCell(b, (_x, _y, v) => { s += v })
   if (s === 0) return b
-  for (let y = 0; y < b.length; y++) for (let x = 0; x < b[0].length; x++) b[y][x] /= s
+  forEachCell(b, (x, y, v) => { setCell(b, x, y, v / s) })
   return b
 }
 
-function buildBelief(width: number, height: number, ep: Position, sigma: number): GridBelief {
-  const b: GridBelief = Array.from({ length: height }, (_, y) =>
-    Array.from({ length: width }, (_, x) => gaussian(ep, x, y, sigma))
-  )
-  return normalise(b)
+function buildBelief(width: number, height: number, ep: Position, sigma: number): Grid<number> {
+  const g = makeGrid<number>(width, height, (x, y) => gaussian(ep, x, y, sigma))
+  return normalise(g)
 }
 
-export class ReactiveSearcher {
-  private width: number
-  private height: number
-  private belief: GridBelief
+export class MultiReactiveSearcher {
+  private belief: Grid<number>
   private visited: Set<string>
   private casualty: Position
+  private ep: Position
 
   constructor(
     width: number,
@@ -45,24 +41,27 @@ export class ReactiveSearcher {
     sigma: number,
     casualty: Position
   ) {
-    this.width = width
-    this.height = height
     this.belief = buildBelief(width, height, ep, sigma)
     this.visited = new Set<string>()
     this.casualty = { ...casualty }
+    this.ep = { ...ep }
   }
 
-  private k(p: Formatted) { return `${p.x},${p.y}` }
+  private k(x: number, y: number) { return `${x},${y}` }
 
-  private chooseTarget(from: Position): Position | null {
+  nextStep(current: Position, claimedThisTick: Set<string>): Position {
+    if (current.x === this.casualty.x && current.y === this.casualty.y) return current
+
     let best: Position | null = null
     let bestScore = -Infinity
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        const p = this.belief[y][x]
+    for (let y = 0; y < this.belief.height; y++) {
+      for (let x = 0; x < this.belief.width; x++) {
+        const p = getCell(this.belief, x, y)
         if (p <= 0) continue
-        if (this.visited.has(this.k({ x, y }))) continue
-        const d = Math.max(1, Math.abs(x - from.x) + Math.abs(y - from.y))
+        const key = this.k(x, y)
+        if (this.visited.has(key)) continue
+        if (claimedThisTick.has(key)) continue
+        const d = Math.max(1, Math.abs(x - current.x) + Math.abs(y - current.y))
         const score = p / d
         if (score > bestScore) {
           bestScore = score
@@ -70,21 +69,15 @@ export class ReactiveSearcher {
         }
       }
     }
-    return best
-  }
 
-  /** POD=1, r=0, casualty stationary. Returns the next grid position. */
-  nextStep(current: Position): Position {
-    // found if on the square
-    if (current.x === this.casualty.x && current.y === this.casualty.y) return current
-
-    // pick the highest-value target; if none, beeline to casualty
-    const target = this.chooseTarget(current) ?? this.casualty
+    // fallback uses EP, not oracle
+    const target = best ?? this.ep
     const next = stepToward(current, target)
 
-    // mark the entered cell as searched
-    this.visited.add(this.k(next))
-    this.belief[next.y][next.x] = 0
+    const nkey = this.k(next.x, next.y)
+    this.visited.add(nkey)
+    setCell(this.belief, next.x, next.y, 0)
+    claimedThisTick.add(nkey)
 
     return next
   }

@@ -10,11 +10,10 @@ const COLORS = {
   textDark: '#222',
   textLight: '#fff',
 
-  // visibility helpers
-  visitedFill: 'rgba(52,143,255,0.12)',     // light blue wash for searched cells
-  pathVisited: 'rgba(255,255,255,0.85)',    // solid path so movement is obvious
-  pathRemaining: 'rgba(255,255,255,0.35)',  // dashed future path
-  currentCellStroke: '#34a1ff'              // bright outline on current cell
+  visitedFill: 'rgba(52,143,255,0.10)',
+  pathVisited: 'rgba(255,255,255,0.85)',
+  pathRemaining: 'rgba(255,255,255,0.35)',
+  currentCellStroke: '#34a1ff'
 }
 
 function drawSquareRect(
@@ -79,13 +78,12 @@ export function render(canvas: HTMLCanvasElement, res: SimResult) {
   const H = canvas.height
   const { width, height } = res
 
-  // Precompute cell size
   const cellW = W / width
   const cellH = H / height
 
   ctx.clearRect(0, 0, W, H)
 
-  // Draw crisp grid lines on half-pixels
+  // grid
   ctx.strokeStyle = COLORS.grid
   ctx.lineWidth = 1
   for (let x = 0; x <= width; x++) {
@@ -103,13 +101,11 @@ export function render(canvas: HTMLCanvasElement, res: SimResult) {
     ctx.stroke()
   }
 
-  // A small symmetric padding so shapes appear to touch edges without bleeding
   const minCell = Math.min(cellW, cellH)
   const pad = minCell * 0.01
   const baseExtraPad = minCell * 0.01
   const droneExtra = minCell * 0.06
 
-  // Helper to get exact cell rect with pad
   const cellRect = (gx: number, gy: number, extraPad = 0) => {
     const L = gx * cellW + pad + extraPad
     const T = gy * cellH + pad + extraPad
@@ -118,9 +114,7 @@ export function render(canvas: HTMLCanvasElement, res: SimResult) {
     return { L, T, R, B, cx: (L + R) / 2, cy: (T + B) / 2, w: R - L, h: B - T }
   }
 
-  // ==== VISIBILITY LAYERS FOR DRONE PATH ====
-
-  // 1) Shade visited cells so progress is obvious
+  // visited wash
   for (const d of res.drones) {
     if (!d.spawned || !d.path || d.path.length < 1) continue
     const upto =
@@ -135,7 +129,7 @@ export function render(canvas: HTMLCanvasElement, res: SimResult) {
     ctx.restore()
   }
 
-  // 2) Draw path segments: solid for visited, dashed for remaining
+  // paths: thinner
   for (const d of res.drones) {
     if (!d.spawned || !d.path || d.path.length < 2) continue
     const upto =
@@ -150,14 +144,14 @@ export function render(canvas: HTMLCanvasElement, res: SimResult) {
       if (i === 0) ctx.moveTo(cx, cy)
       else ctx.lineTo(cx, cy)
     }
-    ctx.lineWidth = Math.max(2, Math.min(cellW, cellH) * 0.22)
+    ctx.lineWidth = Math.max(1.25, Math.min(cellW, cellH) * 0.12)
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
     ctx.strokeStyle = COLORS.pathVisited
     ctx.stroke()
     ctx.restore()
 
-    // remaining segment
+    // future segment
     if (upto < d.path.length - 1) {
       ctx.save()
       ctx.beginPath()
@@ -169,8 +163,8 @@ export function render(canvas: HTMLCanvasElement, res: SimResult) {
         ;({ cx, cy } = cellCenter(p.x, p.y, cellW, cellH, pad))
         ctx.lineTo(cx, cy)
       }
-      ctx.setLineDash([Math.max(4, minCell * 0.6), Math.max(3, minCell * 0.4)])
-      ctx.lineWidth = Math.max(1, Math.min(cellW, cellH) * 0.14)
+      ctx.setLineDash([Math.max(3, minCell * 0.45), Math.max(3, minCell * 0.4)])
+      ctx.lineWidth = Math.max(1, Math.min(cellW, cellH) * 0.08)
       ctx.lineCap = 'round'
       ctx.lineJoin = 'round'
       ctx.strokeStyle = COLORS.pathRemaining
@@ -179,7 +173,7 @@ export function render(canvas: HTMLCanvasElement, res: SimResult) {
     }
   }
 
-  // Bases: steel-grey square with unspawned count, slightly smaller than cell
+  // bases
   for (const base of res.bases) {
     const { L, T, R, B, cx, cy, w, h } = cellRect(base.position.x, base.position.y, baseExtraPad)
     drawSquareRect(ctx, L, T, R, B, COLORS.base)
@@ -187,7 +181,7 @@ export function render(canvas: HTMLCanvasElement, res: SimResult) {
     drawCenteredText(ctx, String(base.unspawned ?? 0), cx, cy, px, COLORS.textLight)
   }
 
-  // EP (Estimated Position): amber square, id centered
+  // EP
   for (const cas of res.casualties) {
     const { L, T, R, B, cx, cy, w, h } = cellRect(cas.estimatedPosition.x, cas.estimatedPosition.y, 0)
     drawSquareRect(ctx, L, T, R, B, COLORS.ep)
@@ -195,7 +189,7 @@ export function render(canvas: HTMLCanvasElement, res: SimResult) {
     drawCenteredText(ctx, String(cas.id), cx, cy, px, COLORS.textDark)
   }
 
-  // AP (Actual Position): red circle, id centered
+  // AP
   for (const cas of res.casualties) {
     const { L, T, R, B, cx, cy } = cellRect(cas.position.x, cas.position.y, 0)
     const { r } = drawCircleRect(ctx, L, T, R, B, COLORS.ap, pad)
@@ -203,29 +197,27 @@ export function render(canvas: HTMLCanvasElement, res: SimResult) {
     drawCenteredText(ctx, String(cas.id), cx, cy, px, COLORS.textLight)
   }
 
-  // 3) Highlight the current cell strongly
+  // current cells
   for (const d of res.drones) {
     if (!d.spawned || !d.path || d.path.length === 0) continue
     const idx = d.step == null ? d.path.length - 1 : Math.max(0, Math.min(d.step, d.path.length - 1))
     const p = d.path[idx]
     const { L, T, R, B } = cellRect(p.x, p.y, 0)
     ctx.save()
-    ctx.lineWidth = Math.max(2, Math.min(cellW, cellH) * 0.18)
+    ctx.lineWidth = Math.max(1.5, Math.min(cellW, cellH) * 0.12)
     ctx.strokeStyle = COLORS.currentCellStroke
     ctx.strokeRect(L + 1, T + 1, (R - L) - 2, (B - T) - 2)
     ctx.restore()
   }
 
-  // Drones: white circle slightly smaller than AP, id centered
+  // drones
   for (const drone of res.drones) {
     if (!drone.spawned) continue
     const drawPos =
       (drone.path && drone.step != null && drone.path[drone.step]) || drone.position
     const { L, T, R, B, cx, cy } = cellRect(drawPos.x, drawPos.y, 0)
 
-    // subtle halo for focus
     ctx.save()
-    ctx.beginPath()
     const haloShrink = pad + droneExtra + Math.max(1, minCell * 0.04)
     drawCircleRect(ctx, L, T, R, B, 'rgba(52,161,255,0.18)', haloShrink)
     ctx.restore()

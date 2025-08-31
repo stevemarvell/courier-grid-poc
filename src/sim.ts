@@ -26,7 +26,7 @@ function makeRng(seed?: number) {
 export async function runSimulation(cfg: SimConfig, hooks?: Partial<SimHooks>): Promise<SimResult> {
   const rng = makeRng(cfg.seed)
 
-  // Bases: centred bottom row, distribute total drones across bases
+  // Bases: centred bottom row, distribute drone capacity across bases
   const bases: Base[] = []
   const per = Math.floor(cfg.droneCount / cfg.baseCount)
   const extra = cfg.droneCount % cfg.baseCount
@@ -60,12 +60,27 @@ export async function runSimulation(cfg: SimConfig, hooks?: Partial<SimHooks>): 
     casualties.push({ id: i + 1, estimatedPosition, position })
   }
 
-  // Spawn a single drone at base[0] with an initial trail of the starting cell only
+  // Spawn drones, round-robin across bases, path starts at spawn cell
   const drones: Drone[] = []
   if (cfg.droneCount > 0 && bases.length > 0) {
-    const base0 = bases[0]
-    drones.push({ id: 1, position: base0.position, spawned: true, path: [base0.position], step: 0 })
-    base0.unspawned = Math.max(0, (base0.unspawned ?? 0) - 1)
+    const counts = bases.map(b => b.unspawned)
+    let idx = 0
+    for (let d = 0; d < cfg.droneCount; d++) {
+      // find next base with capacity
+      let picked = -1
+      for (let tries = 0; tries < bases.length; tries++) {
+        const i = (idx + tries) % bases.length
+        if (counts[i] > 0) { picked = i; break }
+      }
+      if (picked === -1) picked = 0
+      counts[picked]--
+      idx = (picked + 1) % bases.length
+
+      const spawn = bases[picked].position
+      drones.push({ id: d + 1, position: spawn, spawned: true, path: [spawn], step: 0 })
+    }
+    // update unspawned
+    for (let i = 0; i < bases.length; i++) bases[i].unspawned = Math.max(0, counts[i])
   }
 
   const state: SimState = { bases, drones, casualties }
