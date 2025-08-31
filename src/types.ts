@@ -1,3 +1,4 @@
+// types.ps
 export interface SimConfig {
   width: number
   height: number

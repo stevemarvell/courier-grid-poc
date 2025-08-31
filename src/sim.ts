@@ -1,3 +1,4 @@
+//sim.ts
 import type { SimConfig, SimHooks, SimResult, SimState } from './types'
 
 class RNG {

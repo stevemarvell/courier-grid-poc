@@ -1,3 +1,4 @@
+// render.ts
 import type { SimResult } from './types'
 
 export function render(canvas: HTMLCanvasElement, res: SimResult) {
@@ -12,7 +13,7 @@ export function render(canvas: HTMLCanvasElement, res: SimResult) {
   ctx.clearRect(0, 0, W, H)
 
   // grid
-  ctx.strokeStyle = '#1d2733'
+  ctx.strokeStyle = '#33271d'
   ctx.lineWidth = 1
   for (let x = 0; x <= res.width; x++) {
     const vx = Math.round(x * cellW) + 0.5
